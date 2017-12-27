@@ -1,26 +1,29 @@
 function [predict_pros,predict_labels]=predict(imagePath,modelsDir,PwPath,k)
-    %modelsDirÊÇÃ¿¸öÓïÒåÀà³öÏÖµÄ¸ÅÂÊµÄ¾ØÕó±£´æµØÖ·
-    %imagePathÊÇÒªÔ¤²âµÄÍ¼Æ¬Â·¾¶
-    %modelsDirÊÇ±£´æÑµÁ·µÃµ½µÄÄ£ÐÍµÄÂ·¾¶
-    %kÀàËÆtopk
-    %Ã¿¸öÀàµÄmodel¶¼ÊÇÒ»¸ö½á¹¹Ìå£¬modelÀïµÄÊý¾Ý¸ñÊ½ÊÇ£º
+    %modelsDirï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÖµÄ¸ï¿½ï¿½ÊµÄ¾ï¿½ï¿½ó±£´ï¿½ï¿½Ö·
+    %imagePathï¿½ï¿½ÒªÔ¤ï¿½ï¿½ï¿½Í¼Æ¬Â·ï¿½ï¿½
+    %modelsDirï¿½Ç±ï¿½ï¿½ï¿½Ñµï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½Ä£ï¿½Íµï¿½Â·ï¿½ï¿½
+    %kï¿½ï¿½ï¿½ï¿½topk
+    %Ã¿ï¿½ï¿½ï¿½ï¿½ï¿½modelï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½á¹¹ï¿½å£¬modelï¿½ï¿½ï¿½ï¿½ï¿½Ý¸ï¿½Ê½ï¿½Ç£ï¿½
     %       MODEL.mu: a D-by-M matrix.
     %       MODEL.Sigma: a D-by-D-by-M matrix.
     %       MODEL.w: a 1-by-M vector.
     PW_S=load(PwPath);
     PW=PW_S.PW;
-    classNum=length(PW);%ÓïÒåÀàµÄÊýÄ¿
+    classNum=length(PW);%ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿
     image=imread(imagePath);
     image_feature=getImgFeature(image,6,8,1);%d*n
+    [d,n]=size(image_feature);
     pros_all=zeros(1,classNum);
     for i=1:classNum
         model=load([modelsDir,num2str(i),'.mat']);
         m=size(model.w,2);
-        pros=[];
+        pros=zeros(n,m);
         for j=1:m
-            pros=[pros,exp(loggausspdf(image_feature,model.mu(:,j),model.Sigma(:,:,j))+log(model.w(j)))];
+            pro_tmp = loggausspdf(image_feature,model.mu(:,j),model.Sigma(:,:,j))+log(model.w(j));
+            pros(:,j)= pro_tmp;
         end
-        pros_all(i)=sum(log(sum(pros,2)));
+        T = logsumexp(pros,2);
+        pros_all(i)=sum(T);
     end
     %pros_all=pros_all+log(PW);
     [predict_pros_ret,predict_labels_ret]=sort(pros_all,'descend');

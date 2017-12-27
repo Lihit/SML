@@ -1,4 +1,4 @@
-function [label, model, llh] = mixGaussEmExtension(models, init)
+function [model, llh] = mixGaussEmExtension(models, init)
 % Perform Extend EM algorithm for fitting the Gaussian mixture model.
 % Input: 
 %   models: 1 x I(total number of images in each class) data matrix
@@ -16,45 +16,36 @@ function [label, model, llh] = mixGaussEmExtension(models, init)
 %   llh: loglikelihood
 
 fprintf('Extend EM for Gaussian mixture: running ... \n');
-%½«modelsÀïÃæµÄstruct¸ñÊ½±ä³Ématrix
+%ï¿½ï¿½modelsï¿½ï¿½ï¿½ï¿½ï¿½structï¿½ï¿½Ê½ï¿½ï¿½ï¿½matrix
 %n=I*k
-%XÊÇmodel.miu×ª»»¶øÀ´£¬Î¬¶ÈÊÇ£ºd*n
-%W_JKÊÇmodel.w×ª»»¶øÀ´£¬Î¬¶ÈÊÇ£º1*n
-%SIGMA_JKÊÇmodel.Sigma×ª»»¶øÀ´£¬Î¬¶ÈÊÇ£ºd*d*n
+%Xï¿½ï¿½model.miu×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¬ï¿½ï¿½ï¿½Ç£ï¿½d*n
+%W_JKï¿½ï¿½model.w×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¬ï¿½ï¿½ï¿½Ç£ï¿½1*n
+%SIGMA_JKï¿½ï¿½model.Sigma×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¬ï¿½ï¿½ï¿½Ç£ï¿½d*d*n
+
 [X, W_JK, SIGMA_JK]= transModels(models);
-save('X.mat','X')
-tol = 1e-15;
-maxiter = 500;
+
+maxiter = 100;
 llh = -inf(1,maxiter);
-[model,R,label] = initialization(X,init,W_JK,SIGMA_JK);
+[model] = initialization(X,init);
 for iter = 2:maxiter
-    size(R);
-    [R, llh(iter)] = expectation(X,model,W_JK,SIGMA_JK);
-    [~,label(1,:)] = max(R,[],2);
-    R = R(:,unique(label));   % remove empty clusters
+    R = expectation(X,model,W_JK,SIGMA_JK);
     model = maximization(X,R,W_JK,SIGMA_JK);
-    if abs(llh(iter)-llh(iter-1)) < tol*abs(llh(iter)); break; end;
+    llh(iter) = cal_LLH(X, model);
+    disp(['llh of ',num2str(iter),'th iteration is: ',num2str(llh(iter))]);
+    if abs(llh(iter)-llh(iter-1)) < 0.05; break; end;
 end
 llh = llh(2:iter);
 end
 
-
-function [model,R,label] = initialization(X, init,W_JK,SIGMA_JK)
-[d,n] = size(X);
+%% åˆå§‹åŒ–model
+function [model] = initialization(X, init)
+[~,n] = size(X);
 model = [];
-R = [];
-label=[];
-if isstruct(init)  % init with a model
-    model = init;
-    R  = expectation(X,model,W_JK,SIGMA_JK);
-elseif numel(init) == 1  % random init k
+
+if numel(init) == 1  % random init k
     m = init;
-    label = ceil(m*rand(1,n));
-    label = mod(1:n, m); 
-    label(m:m:n) = m;
-    R = full(sparse(1:n,label,1,n,m,n));
-    w_tmp = randi([1,100],1,m);
-    model.w = w_tmp/sum(w_tmp);
+    model.w = ones(1, m) / m;
+
     rndp = randperm(n);
     if m>n
         index=randi([1,n],1,m);
@@ -62,27 +53,22 @@ elseif numel(init) == 1  % random init k
         index=rndp(1:m);
     end
     model.mu =  X(:,index);
-    model.Sigma = SIGMA_JK(:,:,index);
+
+    X_mean = sum(X, 2) ./ n;
+    x_minus = bsxfun(@minus,X,X_mean);
+    tmp = x_minus*x_minus';
+    tmp_pd = PositiveDefiniteTrans(tmp ./ n);
+    for k = 1:m
+        model.Sigma(:,:,k)=tmp_pd;
+    end
+    
 else
     error('ERROR: init is not valid.');
 end
 end
 
-
-function [X, W_JK, SIGMA_JK]= transModels(models)
-X = [];
-W_JK = [];
-SIGMA_JK = [];
-I = size(models,2);%Ò»¸öÀàÀïÃæÍ¼Æ¬µÄÊýÁ¿
-for i=1:I
-    X = [X,models(i).mu];
-    W_JK = [W_JK,models(i).w];
-    SIGMA_JK = cat(3,SIGMA_JK,models(i).Sigma);
-end
-end
-
-
-function [R, llh] = expectation(X, model, W_JK,SIGMA_JK)
+%% Eæ­¥
+function [R] = expectation(X, model, W_JK,SIGMA_JK)
 mu = model.mu;
 Sigma = model.Sigma;
 w = model.w;
@@ -90,30 +76,37 @@ w = model.w;
 n = size(X,2);
 m = size(mu,2);
 R = zeros(n,m);
+
 for i = 1:m
-    R(:,i) = loggausspdf(X,mu(:,i),Sigma(:,:,i));
-    for j = 1:n      
-        R(j,i) = (R(j,i)-0.5*trace(Sigma(:,:,i)\SIGMA_JK(:,:,j)))*W_JK(j);
+    for j = 1:n
+        R(j,i) = w(i) * ((mvnpdf(X(:,j)', mu(:,i)', Sigma(:,:,i)) * exp(-0.5 * trace(Sigma(:,:,i) \ SIGMA_JK(:,:,j)))) ^ W_JK(j));
     end
 end
-R = bsxfun(@plus,R,log(w));
-T = logsumexp(R,2);
-llh = sum(T); % loglikelihood
-R = exp(bsxfun(@minus,R,T));
+s = sum(R,2);
+R = bsxfun(@rdivide,R,s);
+NAN_V=find(isnan(R(:,1)));
+R(NAN_V,:)=ones(length(NAN_V),m)/m;
 end
 
+%% Mæ­¥
 function model = maximization(X,R,W_JK,SIGMA_JK)
 [d,n] = size(X);
 m = size(R,2);
-w = sum(R,1)/n;%1*m
-w_tmp = bsxfun(@times,W_JK',R);
-w_m_jk = bsxfun(@rdivide, w_tmp, sum(w_tmp,1));%n*m
-mu = X*w_m_jk;%d*m
+
+mu = zeros(d, m);
 Sigma = zeros(d,d,m);
-for i = 1:m
-    miu_shift = bsxfun(@minus, X, mu(:,i));%d*n
-    sig_tmp = bsxfun(@plus, SIGMA_JK, miu_shift*miu_shift');%d*d*n
-    Sigma(:,:,i) = sum(bsxfun(@times,reshape(w_m_jk(:,i),[1,1,n]),sig_tmp),3)+eye(d)*(1e-4);
+
+w = sum(R, 1)/n;
+for k = 1 : m
+    w_tmp = R(:,k).*W_JK';
+    w_tmp = w_tmp / sum(w_tmp);
+    mu(:,k) = X * w_tmp;
+
+    miu_shift = bsxfun(@minus, X, mu(:,k));%d*n
+    miu_rep= repmat(reshape(miu_shift,[d,1,n]),1,d);
+    sig_tmp = bsxfun(@times,miu_rep,permute(miu_rep,[2,1,3]))+SIGMA_JK;
+    sig_tmp = sum(bsxfun(@times,reshape(w_tmp,[1,1,n]),sig_tmp),3);
+    Sigma(:,:,k) = PositiveDefiniteTrans(sig_tmp);
 end
 
 model.mu = mu;
@@ -121,15 +114,20 @@ model.Sigma = Sigma;
 model.w = w;
 end
 
-function y = loggausspdf(X, mu, Sigma)
-d = size(X,1);
-X = bsxfun(@minus,X,mu);
-[U,p]= chol(Sigma);
-if p ~= 0
-    error('ERROR: Sigma is not PD.');
+%% è®¡ç®—loglikehood
+function llh = cal_LLH(X, model)
+[~,n] = size(X);
+
+mu = model.mu;
+Sigma = model.Sigma;
+w = model.w;
+
+m = size(mu, 2);
+tmp = zeros(n,m);
+for k= 1:m
+    tmp(:,k) = w(k) * mvnpdf(X', mu(:,k)', Sigma(:,:,k));
 end
-Q = U'\X;
-q = dot(Q,Q,1);  % quadratic term (M distance)
-c = d*log(2*pi)+2*sum(log(diag(U)));   % normalization constant
-y = -(c+q)/2;
+tmp = sum(tmp,2);
+tmp = log(tmp);
+llh = sum(tmp)/n;
 end

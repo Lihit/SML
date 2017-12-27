@@ -1,10 +1,10 @@
-%Ñ¡ÔñÒ»×éÍ¼Æ¬À´Ô¤²â£¬²¢°Ñ½á¹ûÏÔÊ¾ÔÚ½çÃæÉÏ
+%Ñ¡ï¿½ï¿½Ò»ï¿½ï¿½Í¼Æ¬ï¿½ï¿½Ô¤ï¿½â£¬ï¿½ï¿½ï¿½Ñ½ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½Ú½ï¿½ï¿½ï¿½ï¿½ï¿½
 MatName='corel5k_test_annot.mat';
 TxtName='corel5k_test_list.txt';
 LabelTxtName='corel5k_words.txt';
-datasetPath = 'DataSet/';%Êı¾İ¼¯Ä¿Â¼
+datasetPath = 'DataSet/';%ï¿½ï¿½İ¼ï¿½Ä¿Â¼
 
-% »ñÈ¡²âÊÔÍ¼Æ¬µÄÂ·¾¶
+% ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Í¼Æ¬ï¿½ï¿½Â·ï¿½ï¿½
 fid = fopen([datasetPath,TxtName]);
 imgCell = textscan(fid,'%s');
 fclose(fid);
@@ -15,11 +15,11 @@ for i=1:imgNum
     TestImgPaths = [TestImgPaths;strtmp];
 end
 
-%»ñÈ¡²âÊÔÍ¼Æ¬µÄ±êÇ©
+%ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Í¼Æ¬ï¿½Ä±ï¿½Ç©
 matDataCell=load([datasetPath,MatName]);
 TestImgLabels=matDataCell.annot2;
 
-%»ñÈ¡ÓïÒå´ÊµÄÃû×Ö
+%ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½
 fid = fopen([datasetPath,LabelTxtName]);
 imgCell = textscan(fid,'%s');
 fclose(fid);

@@ -12,7 +12,8 @@ function [X] = getImgFeature(image, stride, len, reduction)
 			for c = 1 : C
 				x_channel = dct2(image(h-len+1 : h, w-len+1 : w, c));
 				if reduction == true
-					idx = [1, 2, 3, 4, len+1, len+2, len+3, 2*len+1, 2*len+2, 3*len+1];
+					idx = [1, 2, 3, 4, 5, 6, len+1, len+2, len+3, len+4, len+5, 2*len+1, 2*len+2, 2*len+3, 2*len+4, ...
+						3*len+1, 3*len+2, 3*len+3, 4*len+1, 4*len+2, 5*len+1];
 					x_channel = reshape(x_channel(idx), [], 1);
 				else
 					x_channel = reshape(x_channel, [], 1);
@@ -22,4 +23,5 @@ function [X] = getImgFeature(image, stride, len, reduction)
 			X = [X, x];
 		end
 	end
+	
 end

@@ -18,6 +18,7 @@ for iter = 2:maxiter
     R = R(:,unique(label));   % remove empty clusters
     model = maximization(X,R);
     [R, llh(iter)] = expectation(X,model);
+    disp(['llh of ',num2str(iter),'th iteration is: ',num2str(llh(iter))]);
     if abs(llh(iter)-llh(iter-1)) < tol*abs(llh(iter)); break; end;
 end
 llh = llh(2:iter);
