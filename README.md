@@ -27,7 +27,6 @@ for i= 3:3:200
 * 260个类的模型我都已经跑出来了，但是太大就不上传到github了，如有需要，请email我`wenshaoguo0611@163.com`。
 * 下面上两张结果图：<br>
 ![result1.png-883.8kB][1]
-<br>
 ![result2.png-893.5kB][2]
 
 
