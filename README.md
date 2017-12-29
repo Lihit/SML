@@ -26,9 +26,5 @@ for i= 3:3:200
 ## 更新
 * 260个类的模型我都已经跑出来了，但是太大就不上传到github了，如有需要，请email我`wenshaoguo0611@163.com`。
 * 下面上两张结果图：<br>
-![result1.png-883.8kB][1]
-![result2.png-893.5kB][2]
-
-
-  [1]: http://static.zybuluo.com/wenshao/tlw3frxnq0vbfua80gkcsbrs/result1.png
-  [2]: http://static.zybuluo.com/wenshao/mv86s3tpg6gz15jds0utec71/result2.png
+![result1.png-883.8kB](https://github.com/Lihit/SML/blob/master/result/result1.png)
+![result2.png-893.5kB](https://github.com/Lihit/SML/blob/master/result/result2.png)
