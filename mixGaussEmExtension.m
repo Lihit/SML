@@ -47,11 +47,7 @@ if numel(init) == 1  % random init k
     model.w = ones(1, m) / m;
 
     rndp = randperm(n);
-    if m>n
-        index=randi([1,n],1,m);
-    else
-        index=rndp(1:m);
-    end
+    index=rndp(1:m);
     model.mu =  X(:,index);
 
     X_mean = sum(X, 2) ./ n;
@@ -61,7 +57,6 @@ if numel(init) == 1  % random init k
     for k = 1:m
         model.Sigma(:,:,k)=tmp_pd;
     end
-    
 else
     error('ERROR: init is not valid.');
 end
@@ -73,14 +68,16 @@ mu = model.mu;
 Sigma = model.Sigma;
 w = model.w;
 
-n = size(X,2);
+[d,n] = size(X);
 m = size(mu,2);
 R = zeros(n,m);
-
+SIGMA_JK_cell=mat2cell(SIGMA_JK,d,d,ones(1,n));
 for i = 1:m
-    for j = 1:n
-        R(j,i) = w(i) * ((mvnpdf(X(:,j)', mu(:,i)', Sigma(:,:,i)) * exp(-0.5 * trace(Sigma(:,:,i) \ SIGMA_JK(:,:,j)))) ^ W_JK(j));
-    end
+    Sigma_cell=mat2cell(repmat(Sigma(:,:,i),1,1,n),d,d,ones(1,n));
+    tmp1=mvnpdf(X', mu(:,i)', Sigma(:,:,i));%n*1
+    tmp2=cellfun(@(x,y) x\y,Sigma_cell,SIGMA_JK_cell,'UniformOutput',false);
+    tmp3=exp(-0.5*reshape(cellfun(@trace,tmp2),[n,1]));
+    R(:,i)=w(i) *((tmp1.*tmp3).^(W_JK'));
 end
 s = sum(R,2);
 R = bsxfun(@rdivide,R,s);

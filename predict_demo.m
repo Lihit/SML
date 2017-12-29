@@ -1,9 +1,8 @@
-%ѡ��һ��ͼƬ��Ԥ�⣬���ѽ����ʾ�ڽ�����
-MatName='corel5k_test_annot.mat';
-TxtName='corel5k_test_list.txt';
+%ѡ��һ��ͼƬ��Ԥ�⣬���ѽ����ʾ�ڽ�����
+MatName='corel5k_train_annot.mat';
+TxtName='corel5k_train_list.txt';
 LabelTxtName='corel5k_words.txt';
-datasetPath = 'DataSet/';%��ݼ�Ŀ¼
-
+datasetPath = 'DataSet/';%��ݼ�Ŀ�?
 % ��ȡ����ͼƬ��·��
 fid = fopen([datasetPath,TxtName]);
 imgCell = textscan(fid,'%s');
@@ -17,9 +16,9 @@ end
 
 %��ȡ����ͼƬ�ı�ǩ
 matDataCell=load([datasetPath,MatName]);
-TestImgLabels=matDataCell.annot2;
+TestImgLabels=matDataCell.annot1;
 
-%��ȡ����ʵ�����
+%��ȡ����ʵ�����?
 fid = fopen([datasetPath,LabelTxtName]);
 imgCell = textscan(fid,'%s');
 fclose(fid);
@@ -31,15 +30,16 @@ end
 
 h=3;
 w=4;
-k=5;
+k=4;
 rndp = randperm(imgNum);
 for i=1:h
     for j=1:w
         index=w*(i-1)+j;
-        img=imread(TestImgPaths{rndp(index),1});
-        [predict_pros,predict_labels]=predict(TestImgPaths{rndp(index),1},'models/','models/PW.mat',k);
+        img_index=rndp(index);
+        img=imread(TestImgPaths{img_index,1});
+        [predict_pros,predict_labels]=predict(TestImgPaths{img_index,1},'models/','models/PW.mat',k);
         predict_labelNames=labels(predict_labels,:);
-        true_labelNames_tmp=labels(TestImgLabels(rndp(index),:)==1,:);
+        true_labelNames_tmp=labels(TestImgLabels(img_index,:)==1,:);
         k_tmp=min(k,length(true_labelNames_tmp));
         true_labelNames=true_labelNames_tmp(1:k_tmp);
         true_title='';

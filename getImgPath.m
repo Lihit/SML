@@ -1,7 +1,7 @@
-function ClassImagePaths=getImgPath(matPath,txtPath)
-classNum = 260;%×Ü¹²ÓÐ260¸öÓïÒåÀà
+function [imgNum,ClassImagePaths]=getImgPath(matPath,txtPath)
+classNum = 260;%ï¿½Ü¹ï¿½ï¿½ï¿½260ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 ClassImagePaths = cell(1,classNum);
-datasetPath = 'DataSet/';%Êý¾Ý¼¯   Ä¿Â¼
+datasetPath = 'DataSet/';%ï¿½ï¿½Ý¼ï¿½   Ä¿Â¼
 imgPathTxt = txtPath;
 fid = fopen([datasetPath,imgPathTxt]);
 imgCell = textscan(fid,'%s');
